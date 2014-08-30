@@ -33,8 +33,8 @@ void ShortToReal(signed short* shrt,double* real,int siz) {
 
 
 signed short *buffer;
-int buffer_frames = 1024;
-unsigned int rate = 44100;
+int buffer_frames = 2048;
+unsigned int rate = 16000;
 double *buffer_out, *buffer_in, *power_spectrum;
 snd_pcm_t *capture_handle;
 snd_pcm_hw_params_t *hw_params;
