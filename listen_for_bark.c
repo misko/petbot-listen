@@ -34,8 +34,8 @@ void ShortToReal(signed short* shrt,double* real,int siz) {
 
 
 signed short *buffer;
-int buffer_frames = 1024;
-unsigned int rate = 44100; //22050; //44100;
+int buffer_frames = 2048;
+unsigned int rate = 8000; //44100; //22050; //44100;
 double *buffer_out, *buffer_in, *power_spectrum;
 snd_pcm_t *capture_handle;
 snd_pcm_hw_params_t *hw_params;
@@ -133,8 +133,14 @@ double logit(double * v) {
 	}*/
 
 
-	for (i=20; i<80; i++) {
-		c+=w[i-20]*(abs(v[i]) + abs(v[buffer_frames-1-i]));
+	//for (i=20; i<80; i++) {
+	//	c+=w[i-20]*(abs(v[i]) + abs(v[buffer_frames-1-i]));
+	//}
+
+	for (i=0; i<buffer_frames/2; i++) {
+		if (i>=3 || i<(buffer_frames/2 - 3)) {
+			c+=w[i]*(abs(v[i]) + abs(v[buffer_frames-1-i]));
+		}
 	}
 
 	return 1.0/(1+exp(c));
