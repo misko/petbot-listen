@@ -112,10 +112,31 @@ double logit(double * v) {
 	double c = intercept;
 	//fprintf(stdout,"%lf intercept\n",intercept);
 	int i;
-	for (i=0; i<buffer_frames; i++) {
+	/*for (i=0; i<buffer_frames; i++) {
 		//fprintf(stdout, "%d %lf\n",i,w[i]);
+
+		
+		//regulat
 		c+=w[i]*abs(v[i]);
+
+		//fold back
+		if (i<buffer_frames/2) {
+			c+=w[i]*(abs(v[i]) + abs(v[buffer_frames-1-i]));
+		}
+
+		//fold back - with trim
+		if (i<buffer_frames/2) {
+			if (i>=20 && i<150) {
+				c+=w[i-20]*(abs(v[i]) + abs(v[buffer_frames-1-i]));
+			}
+		}
+	}*/
+
+
+	for (i=20; i<80; i++) {
+		c+=w[i-20]*(abs(v[i]) + abs(v[buffer_frames-1-i]));
 	}
+
 	return 1.0/(1+exp(c));
 }
 
