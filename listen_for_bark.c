@@ -112,6 +112,8 @@ double logit(double * v) {
 	double c = intercept;
 	//fprintf(stdout,"%lf intercept\n",intercept);
 	int i;
+	double tmp[buffer_frames/2];
+	double tmp2[buffer_frames/2];
 	/*for (i=0; i<buffer_frames; i++) {
 		//fprintf(stdout, "%d %lf\n",i,w[i]);
 
@@ -137,11 +139,32 @@ double logit(double * v) {
 	//	c+=w[i-20]*(abs(v[i]) + abs(v[buffer_frames-1-i]));
 	//}
 
+	
+	//reduce by half
 	for (i=0; i<buffer_frames/2; i++) {
-		if (i>=3 || i<(buffer_frames/2 - 3)) {
-			c+=w[i]*(abs(v[i]) + abs(v[buffer_frames-1-i]));
+		tmp[i]=abs(v[i])+abs(v[buffer_frames-1-i]);
+	}
+
+	//blur and put back
+	for (i=0; i<buffer_frames/2; i++) {
+		if (i>1 && i<((buffer_frames/2)-2)) {
+			c+=w[i]*(tmp[i-2]*0.1+tmp[i-1]*0.2+tmp[i]*0.4+tmp[i+1]*0.2+tmp[i+2]*0.1);
+		} else {
+			c+=0;
 		}
 	}
+
+	/*for (i=0; i<buffer_frames/2; i++) {
+		//if (i>=3 || i<(buffer_frames/2 - 3)) 
+		if (i>1 && i<(buffer_frames-2)) {
+			c+=w[i]*(abs(v[i]) + abs(v[buffer_frames-1-i]));
+		} else {
+			assert(abs(w[i])<0.00000000001);
+		}
+		//}
+	}*/
+	
+
 
 	return 1.0/(1+exp(c));
 }
