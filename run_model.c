@@ -49,7 +49,7 @@ void run_file(char * fn, int length) {
 			}
 			p=c;
 		}
-		fprintf(stdout,"%lf\n",logit(v));
+		fprintf(stdout,"%0.5lf\n",logit(v));
 	}	
 }
 

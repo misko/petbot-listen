@@ -15,7 +15,7 @@ double logit(double * v) {
 	double c = intercept;
 	//fprintf(stdout,"%lf intercept\n",intercept);
 	int i;
-	double tmp[model_size/2];
+	double tmp[model_size];
 	/*for (i=0; i<model_size; i++) {
 		//fprintf(stdout, "%d %lf\n",i,w[i]);
 
@@ -43,17 +43,17 @@ double logit(double * v) {
 
 	
 	//reduce by half
-	for (i=0; i<model_size/2; i++) {
-		tmp[i]=abs(v[i])+abs(v[model_size-1-i]);
+	for (i=0; i<model_size; i++) {
+		tmp[i]=fabs(v[i])+fabs(v[2*model_size-1-i]);
 	}
 
 	//blur and put back
-	for (i=0; i<model_size/2; i++) {
-		if (i>1 && i<((model_size/2)-2)) {
-			c+=w[i]*(tmp[i-2]*0.1+tmp[i-1]*0.2+tmp[i]*0.4+tmp[i+1]*0.2+tmp[i+2]*0.1);
-		} else {
-			c+=0;
+	for (i=0; i<model_size; i++) {
+		double cc=0;
+		if (i>1 && i<((model_size)-2)) {
+			cc =w[i]*(tmp[i-2]*0.1+tmp[i-1]*0.2+tmp[i]*0.4+tmp[i+1]*0.2+tmp[i+2]*0.1);
 		}
+		c+=cc;
 	}
 
 	/*for (i=0; i<model_size/2; i++) {
