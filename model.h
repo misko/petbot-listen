@@ -1,3 +1,3 @@
-double logit(double * v, int length);
+double logit(double * v);
 
-void read_model(char * filename, int length);
+int read_model(char * filename);
