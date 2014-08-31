@@ -164,7 +164,7 @@ int main (int argc, char *argv[]) {
   int i;
  
 
-  read_model("./model",buffer_frames);
+  int model_length = read_model("./model");
   //fprintf(stdout, "%lf\n", logit(vstar));
   //exit(1);
   init_barks();
@@ -252,7 +252,7 @@ An FFTW_FORWARD transform corresponds to a sign of -1 in the exponent of the DFT
     }*/
 
     //lets make a prediction!
-    double p = 1-logit(buffer_out,buffer_frames);
+    double p = 1-logit(buffer_out);
     add_bark(p);
     double s = sum_barks();
     if (s>12) {
