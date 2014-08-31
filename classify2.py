@@ -10,7 +10,7 @@ from numpy import mean, std
 from sklearn.decomposition import PCA
 from math import exp
 
-save_file="modelN_blur_l2"
+save_file="modelU_blur_l1"
 
 def read_file(fn):
 	h=open(fn)
@@ -129,7 +129,7 @@ if train==1:
 	#clf=svm.SVC()#kernel='linear')#class_weight='auto')
 	#clf=svm.LinearSVC(class_weight='auto')
 	#clf = tree.DecisionTreeClassifier()
-	clf = LogisticRegression(penalty='l2')
+	clf = LogisticRegression(penalty='l1')
 	#clf = RandomizedLogisticRegression()
 	#clf = LogisticRegression()
 	clf.fit(train_data, train_labels) 
