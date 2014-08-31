@@ -13,7 +13,6 @@ double logit(double * v, int length) {
 	//fprintf(stdout,"%lf intercept\n",intercept);
 	int i;
 	double tmp[length/2];
-	double tmp2[length/2];
 	/*for (i=0; i<length; i++) {
 		//fprintf(stdout, "%d %lf\n",i,w[i]);
 

@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <alsa/asoundlib.h>
-
+#include "model.h"
 
 #define CAMERA_USB_MIC_DEVICE "plughw:1,0"
 	      
@@ -164,7 +164,7 @@ int main (int argc, char *argv[]) {
   int i;
  
 
-  read_model("./model");
+  read_model("./model",buffer_frames);
   //fprintf(stdout, "%lf\n", logit(vstar));
   //exit(1);
   init_barks();
@@ -252,7 +252,7 @@ An FFTW_FORWARD transform corresponds to a sign of -1 in the exponent of the DFT
     }*/
 
     //lets make a prediction!
-    double p = 1-logit(buffer_out);
+    double p = 1-logit(buffer_out,buffer_frames);
     add_bark(p);
     double s = sum_barks();
     if (s>12) {
