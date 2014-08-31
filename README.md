@@ -14,7 +14,7 @@ Included in this repository is:
 
 Run by using:
 
-```./listen_for_bark```
+``` ./listen_for_bark ```
 
 ## License
 All content here is licensed under  GNU General Public License v3.0
