@@ -255,10 +255,10 @@ An FFTW_FORWARD transform corresponds to a sign of -1 in the exponent of the DFT
     double p = 1-logit(buffer_out);
     add_bark(p);
     double s = sum_barks();
-    if (s>12) {
+    if (s>5.5) {
 	fprintf(stdout, "BARK detected\n");
     }   
-    fprintf(stdout, "Sum is %lf\n",s);
+    //fprintf(stdout, "Sum is %lf\n",s);
  
   }
  
