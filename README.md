@@ -12,5 +12,9 @@ Included in this repository is:
 * **src/classify.py** - Train a LR (Logistic regression) model on output of capture
 * **model/** - Contains trained LR models
 
+Run by using:
+
+```./listen_for_bark```
+
 ## License
 All content here is licensed under  GNU General Public License v3.0
