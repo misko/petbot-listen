@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "model.h"
 
-#define BUFFER_SIZE	1024*64
+#define BUFFER_SIZE	1024*1024
 
 void run_file(char * fn, int length) {
 	FILE * fptr = fopen(fn,"r");
@@ -12,7 +12,7 @@ void run_file(char * fn, int length) {
 		exit(1);
 	}	
 	
-	char * line = (char*)malloc(sizeof(BUFFER_SIZE));
+	char * line = (char*)malloc(sizeof(char)*BUFFER_SIZE);
 	if (line==NULL) {
 		fprintf(stdout, "failed to malloc buffer\n");
 		exit(1);
@@ -22,33 +22,34 @@ void run_file(char * fn, int length) {
 
 	fgets(line,BUFFER_SIZE,fptr); //get rid of header
 	while (fgets(line,BUFFER_SIZE,fptr)) {
-		double v[length];
+		double v[length*2];
 		//lets read in the v and then get the score
 		char * c, *p;
 		c=line;
 		p=line;
 		int i=0;
 		while (*p!='\0') {
-			while (*c!='\0' || *c!='\n' || *c!=',') {
+			while (*c!='\0' && *c!='\n' && *c!=',') {
 				c++;
 			}
 			if (*c=='\n') {
-				c='\0';
+				*c='\0';
 			}
 
 			char t=*c;
-			c='\0';
-			if (i>=length) {
-				fprintf(stdout,"failed to read in model, length is off!\n");
+			*c='\0';
+			if (i>=(2*length)) {
+				fprintf(stdout,"failed to read in model, length is off! %d vs %d, %s\n",i,length,p);
 				exit(1);
 			}
 			v[i++]=atof(p);
-	
+			//fprintf(stderr,"FLOAT %lf, %d\n",v[i-1], i);	
 			if (t!='\0') {
 				c++;
 			}
-			p=c;	
+			p=c;
 		}
+		fprintf(stdout,"%lf\n",logit(v));
 	}	
 }
 
