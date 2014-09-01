@@ -1,17 +1,17 @@
-/* 
-  A Minimal Capture Program
- 
-  This program opens an audio interface for capture, configures it for
-  stereo, 16 bit, 44.1kHz, interleaved conventional read/write
-  access. Then its reads a chunk of random data from it, and exits. It
-  isn't meant to be a real program.
- 
-  From on Paul David's tutorial : http://equalarea.com/paul/alsa-audio.html
- 
-  Fixes rate and buffer problems
- 
-  sudo apt-get install libasound2-dev
-  gcc -o alsa-record-example -lasound alsa-record-example.c && ./alsa-record-example hw:0
+/*
+Copyright (c) 2014, Michael (Misko) Dzamba.
+All rights reserved.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <fftw3.h>
 //#include <rfftw.h> 
