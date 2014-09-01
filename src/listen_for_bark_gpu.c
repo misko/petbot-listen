@@ -23,12 +23,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <alsa/asoundlib.h>
 #include <semaphore.h>
 #include <pthread.h>
+#include <time.h>
+
 #include "model.h"
 #include "mailbox.h"
 #include "gpu_fft.h"
 
+
+
 #define CAMERA_USB_MIC_DEVICE "plughw:1,0"
 
+
+#define BARK_THRESHOLD 2.5
 
 	      
 sem_t s_ready; //means this many have been read and ready
@@ -298,13 +304,13 @@ void init_fftw3() {
 
 
 void * read_audio(void * n) {
-    fprintf(stdout,"starting read_audio\n");
+    //fprintf(stdout,"starting read_audio\n");
     int half=0;
     while (1) {
 	    //wait for chunk to be done
-	    fprintf(stdout,"read_audio waiting for s_done\n");
+	    //fprintf(stdout,"read_audio waiting for s_done\n");
 	    sem_wait(&s_done);
-	    fprintf(stdout,"read_audio done waiting for s_done\n");
+	    //fprintf(stdout,"read_audio done waiting for s_done\n");
 	    if (exit_now==1) {	
 		sem_post(&s_ready);
 		sem_post(&s_exit);
@@ -333,7 +339,7 @@ void * read_audio(void * n) {
 
 
 void * process_audio(void * n) {
-	fprintf(stdout,"starting process_audio\n");
+	//fprintf(stdout,"starting process_audio\n");
 	int half=0;
 	while (1) {
 		//move from raw in to input
@@ -365,7 +371,7 @@ void * process_audio(void * n) {
 		//unsigned t[4];
 
 		//now we read in NUM_BUFFERS/2 chunks to GPU lets run this!
-	    	fprintf(stdout,"process_audio running gpu fft\n");
+	    	//fprintf(stdout,"process_audio running gpu fft\n");
 		//t[0]=Microseconds();
 		gpu_fft_execute(gpu_fft); 
 		//t[1]=Microseconds();
@@ -400,7 +406,11 @@ void * process_audio(void * n) {
 		for (i=0; i<NUM_BUFFERS/2; i++) {
 			double d = logit(gpu_buffer_out[i+half*NUM_BUFFERS/2]);
 			add_bark(d);
-			fprintf(stdout,"%f\n",sum_barks());
+			//fprintf(stdout,"%f\n",sum_barks());
+			if (sum_barks()<BARK_THRESHOLD) {
+				time_t result = time(NULL);
+				printf("BARK detected at %s\n", ctime(&result));
+			}
 			
 		}
 
@@ -431,7 +441,7 @@ int main (int argc, char *argv[]) {
   assert(buffer_frames%2==0);
   fprintf(stdout,"reading model\n");
 
-  int model_length = read_model("./model");
+  read_model("./model");
   fprintf(stdout,"starting inits\n");
   init_barks();
   init_audio();
