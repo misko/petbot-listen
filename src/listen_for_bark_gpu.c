@@ -27,6 +27,8 @@
 #include "gpu_fft.h"
 
 #define CAMERA_USB_MIC_DEVICE "plughw:1,0"
+
+
 	      
 sem_t s_ready; //means this many have been read and ready
 sem_t s_done; //means N/2 have been processed
@@ -113,6 +115,14 @@ int init_gpu() {
 	return 0;
 }
 
+
+int free_buffers() {
+	free(buffer_in[0]);
+	free(buffer_in);
+	free(raw_buffer_in[0]);
+	free(raw_buffer_in);
+	return 0;
+}
 
 int init_buffers() {
 	fprintf(stdout,"Buffer init\n");
@@ -281,9 +291,9 @@ unsigned Microseconds(void) {
     return ts.tv_sec*1000000 + ts.tv_nsec/1000;
 }
 
-/*void init_fftw3() {
-  p = fftw_plan_r2r_1d(buffer_frames, buffer_in, cpu_buffer_out , FFTW_R2HC, FFTW_ESTIMATE);
-}*/
+void init_fftw3() {
+  p = fftw_plan_r2r_1d(buffer_frames, buffer_in[0], cpu_buffer_out[0] , FFTW_R2HC, FFTW_ESTIMATE);
+}
 
 
 void * read_audio(void * n) {
@@ -334,27 +344,46 @@ void * process_audio(void * n) {
 				sem_post(&s_exit);
 				return NULL;
 			}
-			//lets copy it to the buffer  for cpu
-			//short_to_double(buffer_in[i+half*NUM_BUFFERS/2],raw_buffer_in[i+half*NUM_BUFFERS/2],buffer_frames);
-				
+		
+
+
+			//COPY TO GPU		
 			struct GPU_FFT_COMPLEX *gpu_base = gpu_fft->in+i*gpu_fft->step;
 			int j;
 			for (j=0; j<buffer_frames; j++) {
 				gpu_base[j].re=raw_buffer_in[i+half*NUM_BUFFERS/2][j];
 				gpu_base[j].im=0;
 			}
+
+
+			//COPY TO CPU
+			short_to_double(buffer_in[i+half*NUM_BUFFERS/2],raw_buffer_in[i+half*NUM_BUFFERS/2],buffer_frames);
+			
 		}
+
+		//unsigned t[4];
 
 		//now we read in NUM_BUFFERS/2 chunks to GPU lets run this!
 	    	fprintf(stdout,"process_audio running gpu fft\n");
+		//t[0]=Microseconds();
 		gpu_fft_execute(gpu_fft); 
+		//t[1]=Microseconds();
+	    	/*fprintf(stdout,"process_audio running cpu fft\n");
+		//t[2]=Microseconds();
+		for (i=0; i<NUM_BUFFERS/2; i++) {
+			fftw_execute_r2r(p,buffer_in[i+half*NUM_BUFFERS/2],cpu_buffer_out[i+half*NUM_BUFFERS/2]);
+		}	
+		//t[3]=Microseconds();
+
+		//fprintf(stdout, "GPU %u vs CPU %u\n",t[1]-t[0],t[3]-t[2]);*/
+	
 		if (exit_now==1) {
 			sem_post(&s_done);
 			sem_post(&s_exit);
 			return NULL;
 		}
 
-		//copy it all out now
+		//copy out GPU vallues
 		for (i=0; i<NUM_BUFFERS/2; i++) {
 			struct GPU_FFT_COMPLEX *gpu_base = gpu_fft->out+i*gpu_fft->step;
 			int j;
@@ -365,6 +394,25 @@ void * process_audio(void * n) {
 				gpu_buffer_out[i+half*NUM_BUFFERS/2][j+buffer_frames/2]=gpu_base[j+buffer_frames/2].im;
 			}
 		}
+
+
+		for (i=0; i<NUM_BUFFERS/2; i++) {
+			double d = logit(gpu_buffer_out[i+half*NUM_BUFFERS/2]);
+			add_bark(d);
+			fprintf(stdout,"%f\n",sum_barks());
+			
+		}
+
+		//compare GPU and CPU on values
+		/*for (i=0; i<NUM_BUFFERS/2; i++) {
+			//lets find the difference between CPU and GPU computations
+			double d =0.0;
+			int j;
+			for (j=0; j<buffer_frames; j++) {
+				d+=fabs(gpu_buffer_out[i+half*NUM_BUFFERS/2][j]-cpu_buffer_out[i+half*NUM_BUFFERS/2][j]);	
+			}	
+			fprintf(stdout,"diff is %f\n", d);
+		}*/
 		
 		sem_post(&s_done);
 		if (exit_now==1) {
@@ -380,18 +428,15 @@ void * process_audio(void * n) {
 
 int main (int argc, char *argv[]) {
   assert(buffer_frames%2==0);
-  int i;
   fprintf(stdout,"reading model\n");
 
   int model_length = read_model("./model");
-  //fprintf(stdout, "%lf\n", logit(vstar));
-  //exit(1);
   fprintf(stdout,"starting inits\n");
   init_barks();
   init_audio();
   init_buffers();
   init_gpu();
-  //init_fftw3();
+  init_fftw3();
 
   //set up the semaphores
   sem_init(&s_ready, 0, 0); 
@@ -404,6 +449,8 @@ int main (int argc, char *argv[]) {
  	fprintf(stderr, "Failed to alloc freq array\n");
 	exit(1);
   }
+	
+  int i;
   for (i = 0; i < buffer_frames; i++) {
 	freq[i]=(((double)i)/buffer_frames)*rate;
 	fprintf(stdout, "%f%c" , freq[i], (i==buffer_frames-1) ?  '\n' : ',');
@@ -442,75 +489,16 @@ int main (int argc, char *argv[]) {
   fftw_destroy_plan(p);
   snd_pcm_close (capture_handle);
 
+  for (i=0; i<NUM_BUFFERS; i++) {
+	free(raw_buffer_in[i]);
+	free(buffer_in[i]);
+	free(cpu_buffer_out[i]);
+	free(gpu_buffer_out[i]);
+  }
   
+  free_buffers();
   return 0;
   
 
 
-
-
-
-/*
-
-
-
-
-  int err;
-  for (i = 0; i < 2000; ++i) {
-    if (i%100==0) {
-	fprintf(stderr,"%d\n",i);
-    }
-    if ((err = snd_pcm_readi (capture_handle, buffer, buffer_frames)) != buffer_frames) {
-      fprintf (stderr, "read from audio interface failed (%s)\n",
-               snd_strerror (err));
-      exit (1);
-    }
-    //convert to frequency domain
-    ShortToReal(buffer,buffer_in,buffer_frames);
-    //cast over to double
-    //clear buffers 
-    
-
-    unsigned t[4];
-
-    //run the fft
-    fprintf(stdout,"start fft on cpu\n");
-    t[0]=Microseconds();    
-    fftw_execute(p);
-    t[1]=Microseconds();    
-    //fprintf(stdout,"finished fft on cpu\n");
-
-    int j;
-	
-
-    t[2]=Microseconds();    
-    fft_gpu(buffer_in,gpu_buffer_out,2048);
-    t[3]=Microseconds();    
-    //fprintf(stdout,"finished fft on gpu\n");
-
-    double d = fft_gpu_compare(cpu_buffer_out,gpu_buffer_out,2048);  
-
-    fprintf(stdout, "DIFF is %lf, %u %u\n",d,t[1]-t[0],t[3]-t[2]);
-    
-    //lets make a prediction!
-    double p = 1-logit(buffer_out);
-    add_bark(p);
-    double s = sum_barks();
-    if (s>12) {
-	fprintf(stdout, "BARK detected\n");
-    }   
-    fprintf(stdout, "Sum is %lf\n",s);
- 
-  }
-  
-  gpu_fft_release(gpu_fft); // Videocore memory lost if not freed !
-
- 
-  fftw_destroy_plan(p);
-  free(buffer);
- 
-	
-  snd_pcm_close (capture_handle);
-
-  return 0; */
 }
