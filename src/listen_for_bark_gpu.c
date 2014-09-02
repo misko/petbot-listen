@@ -108,8 +108,9 @@ int init_gpu() {
 	//int N = 1<<log2_N; //2048;
 	int mb = mbox_open();
 
+    	//int ret = gpu_fft_prepare(mb, log2_N, GPU_FFT_REV, NUM_BUFFERS/2, &gpu_fft); // call once
+    	int ret = gpu_fft_prepare(mb, log2_N, GPU_FFT_FWD, NUM_BUFFERS/2, &gpu_fft); // call once
 
-    	int ret = gpu_fft_prepare(mb, log2_N, GPU_FFT_REV, NUM_BUFFERS/2, &gpu_fft); // call once
 
     	switch(ret) {
         	case -1: printf("Unable to enable V3D. Please check your firmware is up to date.\n"); return -1;
@@ -368,21 +369,21 @@ void * process_audio(void * n) {
 			
 		}
 
-		//unsigned t[4];
+		unsigned t[4];
 
 		//now we read in NUM_BUFFERS/2 chunks to GPU lets run this!
 	    	//fprintf(stdout,"process_audio running gpu fft\n");
-		//t[0]=Microseconds();
+		t[0]=Microseconds();
 		gpu_fft_execute(gpu_fft); 
-		//t[1]=Microseconds();
-	    	/*fprintf(stdout,"process_audio running cpu fft\n");
-		//t[2]=Microseconds();
+		t[1]=Microseconds();
+	    	fprintf(stdout,"process_audio running cpu fft\n");
+		t[2]=Microseconds();
 		for (i=0; i<NUM_BUFFERS/2; i++) {
 			fftw_execute_r2r(p,buffer_in[i+half*NUM_BUFFERS/2],cpu_buffer_out[i+half*NUM_BUFFERS/2]);
 		}	
-		//t[3]=Microseconds();
+		t[3]=Microseconds();
 
-		//fprintf(stdout, "GPU %u vs CPU %u\n",t[1]-t[0],t[3]-t[2]);*/
+		fprintf(stdout, "GPU %u vs CPU %u\n",t[1]-t[0],t[3]-t[2]);
 	
 		if (exit_now==1) {
 			sem_post(&s_done);
@@ -403,6 +404,7 @@ void * process_audio(void * n) {
 		}
 
 
+
 		for (i=0; i<NUM_BUFFERS/2; i++) {
 			double d = logit(gpu_buffer_out[i+half*NUM_BUFFERS/2]);
 			add_bark(d);
@@ -414,8 +416,16 @@ void * process_audio(void * n) {
 			
 		}
 
+
+		for (i=0; i<buffer_frames; i++) {
+			fprintf(stdout,"%0.3f%c" , cpu_buffer_out[0][i], (buffer_frames-1==j) ? '\n' : ',');
+		}
+		for (i=0; i<buffer_frames; i++) {
+			fprintf(stdout,"%0.3f%c" , gpu_buffer_out[0][i], (buffer_frames-1==j) ? '\n' : ',');
+		}
+
 		//compare GPU and CPU on values
-		/*for (i=0; i<NUM_BUFFERS/2; i++) {
+		for (i=0; i<NUM_BUFFERS/2; i++) {
 			//lets find the difference between CPU and GPU computations
 			double d =0.0;
 			int j;
@@ -423,7 +433,7 @@ void * process_audio(void * n) {
 				d+=fabs(gpu_buffer_out[i+half*NUM_BUFFERS/2][j]-cpu_buffer_out[i+half*NUM_BUFFERS/2][j]);	
 			}	
 			fprintf(stdout,"diff is %f\n", d);
-		}*/
+		}
 		
 		sem_post(&s_done);
 		if (exit_now==1) {
